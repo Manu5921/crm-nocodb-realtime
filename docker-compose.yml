@@ -102,58 +102,36 @@ services:
       - traefik.http.routers.crm-nocodb.priority=10
       - traefik.http.services.crm-nocodb.loadbalancer.server.port=8080
 
-  # Hocuspocus WebSocket Server for Yjs real-time collaboration
-  hocuspocus:
-    # Option 1: Build from source (recommended)
-    build:
-      context: ./docker/hocuspocus
-      dockerfile: Dockerfile
-    # Option 2: Use pre-built image (fallback if build fails)
-    # image: node:18-alpine
-    # working_dir: /app
-    # command: sh -c "npm ci --only=production && node server.js"
-    # volumes:
-    #   - ./docker/hocuspocus:/app
-    container_name: crm-hocuspocus
-    restart: unless-stopped
-    depends_on:
-      redis:
-        condition: service_healthy
-    environment:
-      # Hocuspocus configuration
-      PORT: 3001
-      LOG_LEVEL: ${LOG_LEVEL:-info}
-      
-      # Redis connection for persistence
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-Redis_CRM_Pass_456!}
-      
-      # CORS settings
-      CORS_ORIGIN: ${CORS_ORIGIN:-*}
-      
-      # Production settings
-      NODE_ENV: ${NODE_ENV:-production}
-    ports:
-      - "3003:3001"  # Port modifié pour éviter conflit avec 3002
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - crm-network
-      - coolify
-    labels:
-      - coolify.managed=true
-      - coolify.type=application
-      # Temporairement désactivé pour debug
-      # - traefik.enable=true
-      # - traefik.http.routers.crm-hocuspocus.rule=Host(`89.117.61.193`) && Path(`/ws`)
-      # - traefik.http.routers.crm-hocuspocus.entryPoints=http
-      # - traefik.http.routers.crm-hocuspocus.service=crm-hocuspocus
-      # - traefik.http.routers.crm-hocuspocus.priority=10
-      # - traefik.http.services.crm-hocuspocus.loadbalancer.server.port=3001
+  # Hocuspocus COMPLÈTEMENT DÉSACTIVÉ - Source du problème
+  # hocuspocus:
+  #   build:
+  #     context: ./docker/hocuspocus
+  #     dockerfile: Dockerfile
+  #   container_name: crm-hocuspocus
+  #   restart: unless-stopped
+  #   depends_on:
+  #     redis:
+  #       condition: service_healthy
+  #   environment:
+  #     PORT: 3001
+  #     LOG_LEVEL: ${LOG_LEVEL:-info}
+  #     REDIS_HOST: redis
+  #     REDIS_PORT: 6379
+  #     REDIS_PASSWORD: ${REDIS_PASSWORD:-Redis_CRM_Pass_456!}
+  #     CORS_ORIGIN: ${CORS_ORIGIN:-*}
+  #     NODE_ENV: ${NODE_ENV:-production}
+  #   ports:
+  #     - "3003:3001"
+  #   healthcheck:
+  #     test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #   networks:
+  #     - crm-network
+  #   labels:
+  #     - coolify.managed=true
+  #     - coolify.type=application
 
   # Web Server temporairement désactivé - Test NocoDB direct
   # web:
