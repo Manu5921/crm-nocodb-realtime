@@ -1,0 +1,79 @@
+# =======================================================
+# COOLIFY CONFIGURATION - CRM NOCODB TEMPS RÉEL
+# =======================================================
+
+# Build configuration
+build:
+  type: docker-compose
+  file: docker-compose.yml
+  context: .
+
+# Services configuration
+services:
+  - name: postgres
+    type: database
+    image: postgres:15-alpine
+    
+  - name: redis
+    type: cache
+    image: redis:7-alpine
+    
+  - name: nocodb
+    type: application
+    image: nocodb/nocodb:latest
+    port: 8080
+    
+  - name: hocuspocus
+    type: application
+    build: ./docker/hocuspocus
+    port: 3001
+    
+  - name: web
+    type: web
+    image: nginx:alpine
+    port: 80
+    main: true
+    
+  - name: n8n
+    type: application
+    image: n8nio/n8n:latest
+    port: 5678
+    optional: true
+
+# Environment variables
+environment:
+  - NC_PUBLIC_URL
+  - CORS_ORIGIN
+  - POSTGRES_DB
+  - POSTGRES_USER
+  - POSTGRES_PASSWORD
+  - REDIS_PASSWORD
+  - JWT_SECRET
+  - ADMIN_EMAIL
+  - ADMIN_PASSWORD
+  - NC_LOG_LEVEL
+  - LOG_LEVEL
+  - NODE_ENV
+  - N8N_USER
+  - N8N_PASSWORD
+  - N8N_HOST
+  - N8N_PROTOCOL
+  - WEBHOOK_URL
+
+# Healthchecks
+healthchecks:
+  enabled: true
+  timeout: 30s
+  interval: 30s
+  retries: 3
+
+# Volumes
+volumes:
+  - postgres_data
+  - redis_data
+  - nocodb_data
+  - n8n_data
+
+# Networks
+networks:
+  - crm-network

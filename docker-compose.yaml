@@ -1,0 +1,206 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: crm-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-crm_db}
+      POSTGRES_USER: ${POSTGRES_USER:-crm_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-CRM_SecurePass_2024!}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - type: bind
+        source: ./docker/init.sql
+        target: /docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5433:5432"  # Port modifié pour éviter conflit
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-crm_user} -d ${POSTGRES_DB:-crm_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crm-network
+
+  # Redis for Hocuspocus persistence
+  redis:
+    image: redis:7-alpine
+    container_name: crm-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"  # Port modifié pour éviter conflit
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-Redis_CRM_Pass_456!}
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-Redis_CRM_Pass_456!}
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD:-Redis_CRM_Pass_456!}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crm-network
+
+  # NocoDB (No-Code Database)
+  nocodb:
+    image: nocodb/nocodb:latest
+    container_name: crm-nocodb
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database connection
+      NC_DB: "pg://postgres:5432?u=${POSTGRES_USER:-crm_user}&p=${POSTGRES_PASSWORD:-CRM_SecurePass_2024!}&d=${POSTGRES_DB:-crm_db}"
+      
+      # Authentication & Security
+      NC_AUTH_JWT_SECRET: ${JWT_SECRET:-CRM_JWT_SuperSecret_LongKey_789_Production_ChangeInProd}
+      
+      # Public & Admin settings
+      NC_PUBLIC_URL: ${NC_PUBLIC_URL:-http://localhost:8081}
+      NC_ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@crm.local}
+      NC_ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin_CRM_StrongPass_012!}
+      
+      # Logging for debugging
+      NC_LOG_LEVEL: ${NC_LOG_LEVEL:-info}
+      
+      # Disable telemetry in production
+      NC_DISABLE_TELE: "true"
+      
+      # Redis connection for caching
+      NC_REDIS_URL: "redis://:${REDIS_PASSWORD:-Redis_CRM_Pass_456!}@redis:6379"
+      
+      # File storage (optional S3)
+      NC_S3_BUCKET_NAME: ${NC_S3_BUCKET_NAME:-}
+      NC_S3_REGION: ${NC_S3_REGION:-}
+      NC_S3_ACCESS_KEY: ${NC_S3_ACCESS_KEY:-}
+      NC_S3_ACCESS_SECRET: ${NC_S3_ACCESS_SECRET:-}
+    ports:
+      - "8081:8080"  # Port modifié pour éviter conflit
+    volumes:
+      - nocodb_data:/usr/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - crm-network
+    labels:
+      - coolify.managed=true
+      - coolify.type=application
+
+  # Hocuspocus WebSocket Server for Yjs real-time collaboration
+  hocuspocus:
+    build:
+      context: .
+      dockerfile: docker/hocuspocus/Dockerfile
+    container_name: crm-hocuspocus
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      # Hocuspocus configuration
+      PORT: 3001
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      
+      # Redis connection for persistence
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-Redis_CRM_Pass_456!}
+      
+      # CORS settings
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      
+      # Production settings
+      NODE_ENV: ${NODE_ENV:-production}
+    ports:
+      - "3002:3001"  # Port modifié pour éviter conflit
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - crm-network
+    labels:
+      - coolify.managed=true
+      - coolify.type=application
+
+  # Web Server for UI
+  web:
+    image: nginx:alpine
+    container_name: crm-web
+    restart: unless-stopped
+    depends_on:
+      - nocodb
+      - hocuspocus
+    ports:
+      - "80:80"
+    volumes:
+      - ./ui:/usr/share/nginx/html:ro
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - crm-network
+    labels:
+      - coolify.managed=true
+      - coolify.type=application
+      - traefik.enable=true
+
+  # Optional: n8n for future automation workflows
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: crm-n8n
+    restart: unless-stopped
+    environment:
+      # Database
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: ${POSTGRES_DB:-crm_db}
+      DB_POSTGRESDB_USER: ${POSTGRES_USER:-crm_user}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD:-CRM_SecurePass_2024!}
+      
+      # n8n settings
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: ${N8N_USER:-admin}
+      N8N_BASIC_AUTH_PASSWORD: ${N8N_PASSWORD:-N8N_CRM_Password_345!}
+      N8N_HOST: ${N8N_HOST:-localhost}
+      N8N_PORT: 5678
+      N8N_PROTOCOL: ${N8N_PROTOCOL:-http}
+      
+      # Webhook URL for NocoDB integration
+      WEBHOOK_URL: ${WEBHOOK_URL:-http://localhost:5679}
+    ports:
+      - "5679:5678"  # Port modifié pour éviter conflit
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - automation  # Use "docker compose --profile automation up" to include n8n
+    networks:
+      - crm-network
+    labels:
+      - coolify.managed=true
+      - coolify.type=application
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  nocodb_data:
+    driver: local
+  n8n_data:
+    driver: local
+
+networks:
+  crm-network:
+    driver: bridge
