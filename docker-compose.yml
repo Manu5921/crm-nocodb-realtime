@@ -148,17 +148,23 @@ services:
     depends_on:
       - nocodb
       - hocuspocus
-    ports:
-      - "80:80"
+    # REMOVE port 80 exposure - Let Traefik handle it
+    expose:
+      - "80"
     volumes:
       - ./ui:/usr/share/nginx/html:ro
       - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
     networks:
       - crm-network
+      - coolify
     labels:
       - coolify.managed=true
       - coolify.type=application
       - traefik.enable=true
+      - traefik.http.routers.crm-web.rule=Host(`89.117.61.193`) && PathPrefix(`/`)
+      - traefik.http.routers.crm-web.entryPoints=http
+      - traefik.http.routers.crm-web.service=crm-web
+      - traefik.http.services.crm-web.loadbalancer.server.port=80
 
   # Optional: n8n for future automation workflows
   n8n:
@@ -212,3 +218,5 @@ volumes:
 networks:
   crm-network:
     driver: bridge
+  coolify:
+    external: true
