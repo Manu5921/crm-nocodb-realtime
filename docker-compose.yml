@@ -97,8 +97,8 @@ services:
   # Hocuspocus WebSocket Server for Yjs real-time collaboration
   hocuspocus:
     build:
-      context: .
-      dockerfile: docker/hocuspocus/Dockerfile
+      context: ./docker/hocuspocus
+      dockerfile: Dockerfile
     container_name: crm-hocuspocus
     restart: unless-stopped
     depends_on:
