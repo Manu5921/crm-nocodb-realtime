@@ -1,0 +1,646 @@
+/* CRM Kanban Custom Styles */
+
+/* Root Variables */
+:root {
+    --crm-blue: #3B82F6;
+    --crm-green: #10B981;
+    --crm-orange: #F59E0B;
+    --crm-red: #EF4444;
+    --crm-purple: #8B5CF6;
+    --shadow-subtle: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --shadow-moderate: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-strong: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Dark mode variables */
+.dark {
+    --shadow-subtle: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+    --shadow-moderate: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    --shadow-strong: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+}
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Body animations */
+body {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.dark ::-webkit-scrollbar-track {
+    background: #1e293b;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+    background: #475569;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+}
+
+/* Kanban Board Styles */
+.kanban-board {
+    min-height: calc(100vh - 200px);
+}
+
+.kanban-column {
+    transition: all 0.3s ease;
+    min-height: 500px;
+}
+
+.kanban-column:hover {
+    box-shadow: var(--shadow-moderate);
+    transform: translateY(-2px);
+}
+
+.kanban-header {
+    position: relative;
+    overflow: hidden;
+}
+
+.kanban-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(255, 255, 255, 0.1), transparent);
+    pointer-events: none;
+}
+
+.kanban-cards {
+    transition: background-color 0.3s ease;
+}
+
+/* Deal Card Styles */
+.deal-card {
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: var(--shadow-subtle);
+    border: 1px solid #e2e8f0;
+    cursor: grab;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.dark .deal-card {
+    background: #374151;
+    border-color: #4b5563;
+}
+
+.deal-card:hover {
+    box-shadow: var(--shadow-moderate);
+    transform: translateY(-2px);
+}
+
+.deal-card:active {
+    cursor: grabbing;
+}
+
+.deal-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--crm-blue);
+    transition: all 0.3s ease;
+}
+
+.deal-card[data-status="lead"]::before {
+    background: var(--crm-blue);
+}
+
+.deal-card[data-status="qualified"]::before {
+    background: var(--crm-orange);
+}
+
+.deal-card[data-status="proposal"]::before {
+    background: var(--crm-purple);
+}
+
+.deal-card[data-status="won"]::before {
+    background: var(--crm-green);
+}
+
+.deal-card[data-status="lost"]::before {
+    background: var(--crm-red);
+}
+
+.deal-card-header {
+    display: flex;
+    justify-content: between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.deal-card-title {
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 16px;
+    line-height: 1.4;
+    margin: 0;
+    flex: 1;
+}
+
+.dark .deal-card-title {
+    color: #f9fafb;
+}
+
+.deal-card-amount {
+    background: #f3f4f6;
+    color: #374151;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+.dark .deal-card-amount {
+    background: #4b5563;
+    color: #d1d5db;
+}
+
+.deal-card-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.dark .deal-card-meta {
+    border-top-color: #4b5563;
+}
+
+.deal-card-company {
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.dark .deal-card-company {
+    color: #9ca3af;
+}
+
+.deal-card-contact {
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+.dark .deal-card-contact {
+    color: #6b7280;
+}
+
+.deal-card-date {
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+.dark .deal-card-date {
+    color: #6b7280;
+}
+
+/* Priority Indicators */
+.priority-indicator {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.priority-high {
+    background: var(--crm-red);
+}
+
+.priority-medium {
+    background: var(--crm-orange);
+}
+
+.priority-low {
+    background: var(--crm-green);
+}
+
+/* Drag and Drop Styles */
+.sortable-ghost {
+    opacity: 0.4;
+    background: #f8fafc !important;
+    border: 2px dashed #cbd5e1 !important;
+    transform: rotate(2deg);
+}
+
+.dark .sortable-ghost {
+    background: #1e293b !important;
+    border-color: #475569 !important;
+}
+
+.sortable-drag {
+    opacity: 0.8;
+    transform: rotate(-2deg);
+    box-shadow: var(--shadow-strong);
+    z-index: 1000;
+}
+
+.drop-zone-active {
+    background: rgba(59, 130, 246, 0.1);
+    border: 2px dashed var(--crm-blue);
+    border-radius: 8px;
+}
+
+.dark .drop-zone-active {
+    background: rgba(59, 130, 246, 0.2);
+}
+
+/* Animation Classes */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideOut {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes bounce {
+    0%, 20%, 53%, 80%, 100% {
+        transform: translate3d(0, 0, 0);
+    }
+    40%, 43% {
+        transform: translate3d(0, -8px, 0);
+    }
+    70% {
+        transform: translate3d(0, -4px, 0);
+    }
+    90% {
+        transform: translate3d(0, -2px, 0);
+    }
+}
+
+.animate-slide-in {
+    animation: slideIn 0.3s ease-out;
+}
+
+.animate-slide-out {
+    animation: slideOut 0.3s ease-in;
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.animate-bounce {
+    animation: bounce 0.8s ease-out;
+}
+
+/* Modal Styles */
+.modal-backdrop {
+    backdrop-filter: blur(4px);
+    transition: all 0.3s ease;
+}
+
+.modal-content {
+    animation: slideIn 0.3s ease-out;
+}
+
+/* Stats Cards */
+.stats-card {
+    transition: all 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-moderate);
+}
+
+/* Button Styles */
+.btn-primary {
+    background: var(--crm-blue);
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-moderate);
+}
+
+.btn-secondary {
+    background: #6b7280;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background: #4b5563;
+    transform: translateY(-1px);
+}
+
+/* Loading States */
+.loading-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-dots::after {
+    content: '';
+    animation: dots 1.5s infinite;
+}
+
+@keyframes dots {
+    0%, 20% {
+        content: '';
+    }
+    40% {
+        content: '.';
+    }
+    60% {
+        content: '..';
+    }
+    80%, 100% {
+        content: '...';
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .kanban-board {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .kanban-column {
+        min-height: 300px;
+    }
+    
+    .deal-card {
+        padding: 12px;
+    }
+    
+    .deal-card-title {
+        font-size: 14px;
+    }
+    
+    .stats-summary {
+        display: none;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 10px auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .kanban-cards {
+        padding: 12px;
+    }
+    
+    .deal-card {
+        padding: 8px;
+    }
+    
+    .deal-card-title {
+        font-size: 13px;
+    }
+    
+    .deal-card-amount {
+        font-size: 11px;
+        padding: 2px 6px;
+    }
+}
+
+/* Debug Panel Styles */
+#debug-panel {
+    font-family: 'Courier New', monospace;
+    border: 1px solid #374151;
+    backdrop-filter: blur(8px);
+    animation: slideIn 0.3s ease-out;
+    z-index: 1000;
+}
+
+#debug-panel.hidden {
+    animation: slideOut 0.3s ease-in;
+}
+
+/* Accessibility */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Focus styles */
+.focus-visible {
+    outline: 2px solid var(--crm-blue);
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .deal-card {
+        border: 2px solid;
+    }
+    
+    .kanban-column {
+        border: 2px solid;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Print styles */
+@media print {
+    .kanban-board {
+        display: block;
+    }
+    
+    .kanban-column {
+        break-inside: avoid;
+        margin-bottom: 20px;
+    }
+    
+    .deal-card {
+        break-inside: avoid;
+        margin-bottom: 10px;
+    }
+    
+    .debug-panel,
+    .modal-backdrop {
+        display: none !important;
+    }
+}
+
+/* Color scheme utilities */
+.text-status-lead {
+    color: var(--crm-blue);
+}
+
+.text-status-qualified {
+    color: var(--crm-orange);
+}
+
+.text-status-proposal {
+    color: var(--crm-purple);
+}
+
+.text-status-won {
+    color: var(--crm-green);
+}
+
+.text-status-lost {
+    color: var(--crm-red);
+}
+
+.bg-status-lead {
+    background-color: var(--crm-blue);
+}
+
+.bg-status-qualified {
+    background-color: var(--crm-orange);
+}
+
+.bg-status-proposal {
+    background-color: var(--crm-purple);
+}
+
+.bg-status-won {
+    background-color: var(--crm-green);
+}
+
+.bg-status-lost {
+    background-color: var(--crm-red);
+}
+
+/* Collaboration indicators */
+.collaboration-indicator {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid white;
+    background: var(--crm-green);
+    animation: pulse 2s infinite;
+}
+
+.collaboration-indicator.editing {
+    background: var(--crm-orange);
+}
+
+.collaboration-indicator.multiple {
+    background: var(--crm-purple);
+}
+
+/* Notification styles */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: var(--shadow-strong);
+    animation: slideIn 0.3s ease-out;
+    z-index: 1000;
+}
+
+.notification.success {
+    background: var(--crm-green);
+    color: white;
+}
+
+.notification.error {
+    background: var(--crm-red);
+    color: white;
+}
+
+.notification.warning {
+    background: var(--crm-orange);
+    color: white;
+}
+
+.notification.info {
+    background: var(--crm-blue);
+    color: white;
+}

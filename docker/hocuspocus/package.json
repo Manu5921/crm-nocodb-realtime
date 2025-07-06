@@ -1,0 +1,47 @@
+{
+  "name": "nocodb-crm-hocuspocus",
+  "version": "1.0.0",
+  "description": "Real-time collaborative editing server for NocoDB CRM",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "NODE_ENV=development node server.js",
+    "prod": "NODE_ENV=production node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "hocuspocus",
+    "yjs",
+    "collaborative",
+    "real-time",
+    "websocket",
+    "crm",
+    "nocodb"
+  ],
+  "author": "NocoDB CRM Team",
+  "license": "MIT",
+  "dependencies": {
+    "@hocuspocus/server": "^2.13.0",
+    "@hocuspocus/extension-logger": "^2.13.0",
+    "@hocuspocus/extension-redis": "^2.13.0",
+    "@hocuspocus/extension-database": "^2.13.0",
+    "@hocuspocus/extension-throttle": "^2.13.0",
+    "yjs": "^13.6.8",
+    "y-protocols": "^1.0.6"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nocodb/nocodb.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nocodb/nocodb/issues"
+  },
+  "homepage": "https://github.com/nocodb/nocodb#readme"
+}

@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  hocuspocus:
+    build: .
+    container_name: nocodb-crm-hocuspocus
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - HOCUSPOCUS_PORT=3001
+      - HOCUSPOCUS_NAME=nocodb-crm-hocuspocus
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - REDIS_DATABASE=${REDIS_DATABASE:-0}
+      - REDIS_KEY_PREFIX=hocuspocus:
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3000}
+      - THROTTLE_ENABLED=${THROTTLE_ENABLED:-true}
+      - THROTTLE_LIMIT=${THROTTLE_LIMIT:-15}
+      - THROTTLE_BAN_TIME=${THROTTLE_BAN_TIME:-5}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - hocuspocus-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  redis:
+    image: redis:7-alpine
+    container_name: nocodb-crm-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    networks:
+      - hocuspocus-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+networks:
+  hocuspocus-network:
+    driver: bridge
+    name: nocodb-crm-network
+
+volumes:
+  redis_data:
+    driver: local
+    name: nocodb-crm-redis-data

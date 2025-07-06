@@ -1,0 +1,130 @@
+# Coolify Configuration - CRM NocoDB Temps Réel
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: crm_db
+      POSTGRES_USER: crm_user
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crm_user -d crm_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crm-network
+
+  # Redis for Hocuspocus persistence
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crm-network
+
+  # NocoDB Backend
+  nocodb:
+    image: nocodb/nocodb:latest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database connection
+      NC_DB: "pg://postgres:5432?u=crm_user&p=${DATABASE_PASSWORD}&d=crm_db"
+      
+      # Security
+      NC_AUTH_JWT_SECRET: ${JWT_SECRET}
+      NC_ADMIN_EMAIL: ${ADMIN_EMAIL}
+      NC_ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      
+      # Public URL
+      NC_PUBLIC_URL: https://${COOLIFY_FQDN}
+      
+      # Performance
+      NC_LOG_LEVEL: info
+      NC_DISABLE_TELE: "true"
+      
+      # Redis cache
+      NC_REDIS_URL: "redis://:${REDIS_PASSWORD}@redis:6379"
+    volumes:
+      - nocodb_data:/usr/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/dashboard"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - crm-network
+
+  # Hocuspocus WebSocket Server
+  hocuspocus:
+    build: 
+      context: .
+      dockerfile: docker/hocuspocus/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      PORT: 3001
+      LOG_LEVEL: info
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      CORS_ORIGIN: https://${COOLIFY_FQDN}
+      NODE_ENV: production
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - crm-network
+
+  # Frontend Web Server
+  web:
+    image: nginx:alpine
+    restart: unless-stopped
+    depends_on:
+      - nocodb
+      - hocuspocus
+    volumes:
+      - ./ui:/usr/share/nginx/html:ro
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
+    labels:
+      # Coolify reverse proxy labels
+      - "coolify.managed=true"
+      - "coolify.version=1.0"
+      - "coolify.name=crm-web"
+      - "coolify.http.routers.crm.rule=Host(`${COOLIFY_FQDN}`)"
+      - "coolify.http.routers.crm.tls=true"
+      - "coolify.http.routers.crm.tls.certresolver=letsencrypt"
+    networks:
+      - crm-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  nocodb_data:
+    driver: local
+
+networks:
+  crm-network:
+    driver: bridge

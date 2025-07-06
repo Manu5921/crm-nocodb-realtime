@@ -1,0 +1,191 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: crm-postgres
+    environment:
+      POSTGRES_DB: crm_db
+      POSTGRES_USER: crm_user
+      POSTGRES_PASSWORD: crm_secure_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crm_user -d crm_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crm-network
+
+  # Redis for Hocuspocus persistence
+  redis:
+    image: redis:7-alpine
+    container_name: crm-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crm-network
+
+  # NocoDB (No-Code Database)
+  nocodb:
+    image: nocodb/nocodb:latest
+    container_name: crm-nocodb
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database connection
+      NC_DB: "pg://postgres:5432?u=crm_user&p=crm_secure_password&d=crm_db"
+      
+      # Authentication & Security
+      NC_AUTH_JWT_SECRET: "crm-super-secret-jwt-key-change-in-production"
+      
+      # Public & Admin settings
+      NC_PUBLIC_URL: "${NC_PUBLIC_URL:-http://localhost:8080}"
+      NC_ADMIN_EMAIL: "${NC_ADMIN_EMAIL:-admin@crm.local}"
+      NC_ADMIN_PASSWORD: "${NC_ADMIN_PASSWORD:-admin123}"
+      
+      # Logging for debugging
+      NC_LOG_LEVEL: "${NC_LOG_LEVEL:-info}"
+      
+      # Disable telemetry in development
+      NC_DISABLE_TELE: "true"
+      
+      # File uploads
+      NC_S3_BUCKET_NAME: "${NC_S3_BUCKET_NAME:-}"
+      NC_S3_REGION: "${NC_S3_REGION:-}"
+      NC_S3_ACCESS_KEY: "${NC_S3_ACCESS_KEY:-}"
+      NC_S3_ACCESS_SECRET: "${NC_S3_ACCESS_SECRET:-}"
+    ports:
+      - "8080:8080"
+    volumes:
+      - nocodb_data:/usr/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/dashboard"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - crm-network
+
+  # Hocuspocus WebSocket Server for Yjs real-time collaboration
+  hocuspocus:
+    image: node:20-alpine
+    container_name: crm-hocuspocus
+    working_dir: /app
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      # Hocuspocus configuration
+      PORT: 3001
+      LOG_LEVEL: "${LOG_LEVEL:-info}"
+      
+      # Redis connection for persistence
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      
+      # CORS settings
+      CORS_ORIGIN: "${CORS_ORIGIN:-*}"
+      
+      # Development settings
+      NODE_ENV: "${NODE_ENV:-development}"
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./hocuspocus:/app
+      - /app/node_modules
+    command: sh -c "
+      if [ ! -f package.json ]; then
+        npm init -y
+        npm install @hocuspocus/server @hocuspocus/extension-redis @hocuspocus/extension-logger
+      fi
+      node server.js
+    "
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - crm-network
+
+  # Development Web Server for UI
+  web:
+    image: nginx:alpine
+    container_name: crm-web
+    depends_on:
+      - nocodb
+      - hocuspocus
+    ports:
+      - "80:80"
+    volumes:
+      - ../ui:/usr/share/nginx/html
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - crm-network
+
+  # Optional: n8n for future automation workflows
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: crm-n8n
+    environment:
+      # Database
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: crm_db
+      DB_POSTGRESDB_USER: crm_user
+      DB_POSTGRESDB_PASSWORD: crm_secure_password
+      
+      # n8n settings
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: "${N8N_USER:-admin}"
+      N8N_BASIC_AUTH_PASSWORD: "${N8N_PASSWORD:-n8n123}"
+      N8N_HOST: "${N8N_HOST:-localhost}"
+      N8N_PORT: 5678
+      N8N_PROTOCOL: "${N8N_PROTOCOL:-http}"
+      
+      # Webhook URL for NocoDB integration
+      WEBHOOK_URL: "${WEBHOOK_URL:-http://localhost:5678}"
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - automation  # Use "docker compose --profile automation up" to include n8n
+    networks:
+      - crm-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  nocodb_data:
+    driver: local
+  n8n_data:
+    driver: local
+
+networks:
+  crm-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
