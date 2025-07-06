@@ -96,7 +96,7 @@ services:
       - coolify.managed=true
       - coolify.type=application
       - traefik.enable=true
-      - traefik.http.routers.crm-nocodb.rule=Host(`89.117.61.193`) && PathPrefix(`/api/`)
+      - traefik.http.routers.crm-nocodb.rule=Host(`89.117.61.193`) && PathPrefix(`/`)
       - traefik.http.routers.crm-nocodb.entryPoints=http
       - traefik.http.routers.crm-nocodb.service=crm-nocodb
       - traefik.http.routers.crm-nocodb.priority=10
@@ -155,28 +155,27 @@ services:
       # - traefik.http.routers.crm-hocuspocus.priority=10
       # - traefik.http.services.crm-hocuspocus.loadbalancer.server.port=3001
 
-  # Simple Web Server for static UI files
-  web:
-    image: nginx:alpine
-    container_name: crm-web
-    restart: unless-stopped
-    # REMOVE complex nginx config - Use simple file serving
-    expose:
-      - "80"
-    volumes:
-      - ./ui:/usr/share/nginx/html:ro
-    networks:
-      - crm-network
-      - coolify
-    labels:
-      - coolify.managed=true
-      - coolify.type=application
-      - traefik.enable=true
-      - traefik.http.routers.crm-web.rule=Host(`89.117.61.193`) && PathPrefix(`/`)
-      - traefik.http.routers.crm-web.entryPoints=http
-      - traefik.http.routers.crm-web.service=crm-web
-      - traefik.http.routers.crm-web.priority=1
-      - traefik.http.services.crm-web.loadbalancer.server.port=80
+  # Web Server temporairement désactivé - Test NocoDB direct
+  # web:
+  #   image: nginx:alpine
+  #   container_name: crm-web
+  #   restart: unless-stopped
+  #   expose:
+  #     - "80"
+  #   volumes:
+  #     - ./ui:/usr/share/nginx/html:ro
+  #   networks:
+  #     - crm-network
+  #     - coolify
+  #   labels:
+  #     - coolify.managed=true
+  #     - coolify.type=application
+  #     - traefik.enable=true
+  #     - traefik.http.routers.crm-web.rule=Host(`89.117.61.193`) && PathPrefix(`/`)
+  #     - traefik.http.routers.crm-web.entryPoints=http
+  #     - traefik.http.routers.crm-web.service=crm-web
+  #     - traefik.http.routers.crm-web.priority=1
+  #     - traefik.http.services.crm-web.loadbalancer.server.port=80
 
   # Optional: n8n for future automation workflows
   n8n:
