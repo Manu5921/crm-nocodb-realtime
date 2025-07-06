@@ -10,8 +10,9 @@ RUN apk add --no-cache dumb-init
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production && npm cache clean --force
+# Install dependencies with retries and fallback
+RUN npm ci --only=production --no-audit --no-fund || npm install --only=production
+RUN npm cache clean --force
 
 # Copy server code
 COPY server.js ./
