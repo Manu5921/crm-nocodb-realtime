@@ -99,6 +99,7 @@ services:
       - traefik.http.routers.crm-nocodb.rule=Host(`89.117.61.193`) && PathPrefix(`/api/`)
       - traefik.http.routers.crm-nocodb.entryPoints=http
       - traefik.http.routers.crm-nocodb.service=crm-nocodb
+      - traefik.http.routers.crm-nocodb.priority=10
       - traefik.http.services.crm-nocodb.loadbalancer.server.port=8080
 
   # Hocuspocus WebSocket Server for Yjs real-time collaboration
@@ -150,6 +151,7 @@ services:
       - traefik.http.routers.crm-hocuspocus.rule=Host(`89.117.61.193`) && PathPrefix(`/ws`)
       - traefik.http.routers.crm-hocuspocus.entryPoints=http
       - traefik.http.routers.crm-hocuspocus.service=crm-hocuspocus
+      - traefik.http.routers.crm-hocuspocus.priority=10
       - traefik.http.services.crm-hocuspocus.loadbalancer.server.port=3001
 
   # Simple Web Server for static UI files
@@ -172,6 +174,7 @@ services:
       - traefik.http.routers.crm-web.rule=Host(`89.117.61.193`) && PathPrefix(`/`)
       - traefik.http.routers.crm-web.entryPoints=http
       - traefik.http.routers.crm-web.service=crm-web
+      - traefik.http.routers.crm-web.priority=1
       - traefik.http.services.crm-web.loadbalancer.server.port=80
 
   # Optional: n8n for future automation workflows
