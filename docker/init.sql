@@ -412,13 +412,24 @@ ORDER BY total_deal_value DESC;
 -- PERMISSIONS AND SECURITY
 -- =========================================
 
--- Grant necessary permissions to the CRM user
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO crm_user;
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO crm_user;
-GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO crm_user;
+-- Create CRM user if not exists (will be handled by environment variables)
+-- This section is commented as PostgreSQL container will create the user via ENV vars
+-- The POSTGRES_USER environment variable creates the user automatically
 
--- Grant usage on schema
-GRANT USAGE ON SCHEMA public TO crm_user;
+-- Grant necessary permissions to the CRM user (executed after user creation)
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'crm_user') THEN
+        GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO crm_user;
+        GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO crm_user;
+        GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO crm_user;
+        GRANT USAGE ON SCHEMA public TO crm_user;
+        RAISE NOTICE 'Permissions granted to crm_user successfully';
+    ELSE
+        RAISE NOTICE 'User crm_user not found, permissions will be set by PostgreSQL container';
+    END IF;
+END
+$$;
 
 -- =========================================
 -- COMPLETION MESSAGE

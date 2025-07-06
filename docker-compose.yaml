@@ -19,9 +19,10 @@ services:
       - "5433:5432"  # Port modifié pour éviter conflit
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-crm_user} -d ${POSTGRES_DB:-crm_db}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 40s
     networks:
       - crm-network
 
@@ -96,9 +97,16 @@ services:
 
   # Hocuspocus WebSocket Server for Yjs real-time collaboration
   hocuspocus:
+    # Option 1: Build from source (recommended)
     build:
       context: ./docker/hocuspocus
       dockerfile: Dockerfile
+    # Option 2: Use pre-built image (fallback if build fails)
+    # image: node:18-alpine
+    # working_dir: /app
+    # command: sh -c "npm ci --only=production && node server.js"
+    # volumes:
+    #   - ./docker/hocuspocus:/app
     container_name: crm-hocuspocus
     restart: unless-stopped
     depends_on:
