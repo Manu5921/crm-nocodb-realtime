@@ -147,12 +147,13 @@ services:
     labels:
       - coolify.managed=true
       - coolify.type=application
-      - traefik.enable=true
-      - traefik.http.routers.crm-hocuspocus.rule=Host(`89.117.61.193`) && PathPrefix(`/ws`)
-      - traefik.http.routers.crm-hocuspocus.entryPoints=http
-      - traefik.http.routers.crm-hocuspocus.service=crm-hocuspocus
-      - traefik.http.routers.crm-hocuspocus.priority=10
-      - traefik.http.services.crm-hocuspocus.loadbalancer.server.port=3001
+      # Temporairement désactivé pour debug
+      # - traefik.enable=true
+      # - traefik.http.routers.crm-hocuspocus.rule=Host(`89.117.61.193`) && Path(`/ws`)
+      # - traefik.http.routers.crm-hocuspocus.entryPoints=http
+      # - traefik.http.routers.crm-hocuspocus.service=crm-hocuspocus
+      # - traefik.http.routers.crm-hocuspocus.priority=10
+      # - traefik.http.services.crm-hocuspocus.loadbalancer.server.port=3001
 
   # Simple Web Server for static UI files
   web:
